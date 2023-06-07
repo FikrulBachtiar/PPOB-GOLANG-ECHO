@@ -10,6 +10,7 @@ import (
 type OnboardingRepo interface {
 	GetUserByNumber(msisdn string) (*domain.GetUserByNumber, error)
 	CreateUser(msisdn string, uuid string, fullName string, user_code string, created_on string, user_status_code string) (*domain.InsertUser, error)
+	CheckLoginDevice(IdUser int) (int, error)
 }
 
 type onboardingRepo struct {
@@ -26,6 +27,7 @@ func (onboardRepo *onboardingRepo) GetUserByNumber(msisdn string) (*domain.GetUs
 	var result domain.GetUserByNumber
 	sqlQuery := fmt.Sprintf(`
 	SELECT
+		tu.id_user,
 		tu.fullname,
 		tu.is_question,
 		tu.login_status,
@@ -42,14 +44,13 @@ func (onboardRepo *onboardingRepo) GetUserByNumber(msisdn string) (*domain.GetUs
 		tu.msisdn = '%s'`,
 	msisdn);
 
-	err := onboardRepo.db.QueryRow(sqlQuery).Scan(&result.Fullname, &result.IsQuestion, &result.LoginStatus, &result.LastLogin, &result.UserStatusCode, &result.EmailStatus);
+	err := onboardRepo.db.QueryRow(sqlQuery).Scan(&result.IdUser, &result.Fullname, &result.IsQuestion, &result.LoginStatus, &result.LastLogin, &result.UserStatusCode, &result.EmailStatus);
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil;
 		}
 		return nil, err;
 	}
-	fmt.Println("Oh => ", &result)
 
 	return &result, nil;
 }
@@ -65,4 +66,16 @@ func (onboardRepo *onboardingRepo) CreateUser(msisdn string, uuid string, fullNa
 	}
 
 	return &result, nil;
+}
+
+func (onboardRepo *onboardingRepo) CheckLoginDevice(IdUser int) (int, error) {
+	var resultNumber int
+	sqlQuery := fmt.Sprintf("SELECT count(*) as resultNumber FROM transaction.t_login_app WHERE id_user = %d AND is_logout = TRUE", IdUser);
+
+	err := onboardRepo.db.QueryRow(sqlQuery).Scan(&resultNumber);
+	if err != nil {
+		return 0, err;
+	}
+
+	return resultNumber, nil;
 }

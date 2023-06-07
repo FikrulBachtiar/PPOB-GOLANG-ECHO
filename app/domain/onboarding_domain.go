@@ -12,6 +12,7 @@ type CheckResponse struct {
 }
 
 type GetUserByNumber struct {
+	IdUser         int     `json:"id_user"`
 	Fullname       string  `json:"fullname"`
 	IsQuestion     bool    `json:"is_question"`
 	LoginStatus    *int    `json:"login_status"`

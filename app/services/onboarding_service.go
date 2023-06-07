@@ -44,13 +44,13 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 			return http.StatusInternalServerError, 3925, nil, err;
 		}
 		
-		strings, err := utils.SerialNumberString(utils.RandomNumber(9999999999));
+		serial, err := utils.SerialNumberString(utils.RandomNumber(9999999999));
 		if err != nil {
 			return http.StatusInternalServerError, 7146, nil, err;
 		}
-		fullname := fmt.Sprintf("User%s", strings);
+		fullName := fmt.Sprintf("User%s", serial);
 		
-		result, err := onboardService.onboardingRepo.CreateUser(payload.Msisdn, uuid, fullname, user_code, created_on, user_status_code);
+		result, err := onboardService.onboardingRepo.CreateUser(payload.Msisdn, uuid, fullName, user_code, created_on, user_status_code);
 		if err != nil {
 			return http.StatusInternalServerError, 1738, nil, err;
 		}
@@ -60,7 +60,7 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 		response.IsBlocked = false;
 		response.State = "REGISTER";
 
-		return http.StatusOK, 0, nil, nil;
+		return http.StatusOK, 0, &response, nil;
 	}
 
 	statusAccountBlocked := os.Getenv("STATUS_ACCOUNT_BLOCKED");
@@ -70,9 +70,11 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 
 	var isLoginCode int = 1;
 	if user.LoginStatus != nil && *user.LoginStatus == isLoginCode {
-		// jika sudah login, check apakah berbeda device
-		fmt.Println("Is Login");
-		return http.StatusForbidden, 4073, nil, nil;
+		response.EmailStatus = utils.EmailParsingString(user.EmailStatus);
+		response.IsQuestion = user.IsQuestion;
+		response.IsBlocked = false;
+		response.State = "OTP";
+		return http.StatusOK, 0, &response, nil;
 	}
 
 	response.EmailStatus = utils.EmailParsingString(user.EmailStatus);
