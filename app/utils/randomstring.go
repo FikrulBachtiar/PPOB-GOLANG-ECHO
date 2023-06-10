@@ -28,10 +28,25 @@ func RandomString(length int) (string, error) {
 	return randomString, nil;
 }
 
-func RandomNumber(number int) int {
+func RandomNumber(length int) int {
 	rand.Seed(time.Now().UnixNano());
-	randomNumber := rand.Intn(number);
-	return randomNumber;
+	var numbers int
+	var listNumbers []int
+	var result int
+	zero := 1;
+
+	for x := 1; x < length; x++ {
+		randomNumber := rand.Intn(9);
+		zero *= 10;
+		numbers = zero * randomNumber;
+		listNumbers = append(listNumbers, numbers);
+	}
+
+	for _, num := range listNumbers {
+		result += num;
+	}
+
+	return result;
 }
 
 func SerialNumberString(number int) (string, error) {

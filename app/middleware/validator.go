@@ -8,21 +8,25 @@ import (
 
 type PayloadValidator struct {
 	Validator *validator.Validate
+	CustomValidatorErr func(err error) string
 }
 
-func CustomValidatorErrorMessage(err error) error {
+func CustomValidatorErrorMessage(err error) string {
 	if validationErr, ok := err.(validator.ValidationErrors); ok {
 		for _, fieldErr := range validationErr {
 			switch fieldErr.Tag() {
 			case "required":
-				return errors.New("Invalid request payload");
+				return "Request not valid";
 			}
 		}
 	}
-
-	return nil;
+	
+	return err.Error();
 }
 
-func (pv *PayloadValidator) Validate(i interface{}) error {
-	return pv.Validator.Struct(i);
+func (cv *PayloadValidator) Validate(i interface{}) error {
+    if err := cv.Validator.Struct(i); err != nil {
+        return errors.New(cv.CustomValidatorErr(err));
+    }
+    return nil
 }
