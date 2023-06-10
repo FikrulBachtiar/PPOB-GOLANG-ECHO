@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"ppob/app/configs"
 	"ppob/app/domain"
-	"ppob/app/middleware"
 	"ppob/app/services"
 
 	"github.com/labstack/echo/v4"
@@ -31,20 +30,17 @@ func (oc *onboardingController) Check(ctx echo.Context) error {
 	if err := ctx.Bind(payload); err != nil {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
-			Code: 8502,
-			Message: "Request not valid",
-			Error: err.Error(),
+			Code: 7581,
+			Message: err.Error(),
 		}
 		return response.ResponseMiddleware(ctx);
 	}
-	
+
 	if err := ctx.Validate(payload); err != nil {
-		errorMessage := middleware.CustomValidatorErrorMessage(err);
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
-			Code: 8565,
-			Message: errorMessage.Error(),
-			Error: err.Error(),
+			Code: 6708,
+			Message: err.Error(),
 		}
 		return response.ResponseMiddleware(ctx);
 	}
