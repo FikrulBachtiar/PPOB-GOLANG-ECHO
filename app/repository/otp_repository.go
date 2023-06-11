@@ -9,11 +9,11 @@ import (
 )
 
 type OtpRepository interface {
-	GetUserAttempt(msisdn string) (*domain.GetUserAttempt, error)
+	GetUserAttempt(Msisdn string, Type string) (*domain.GetUserAttempt, error)
 	GetDurationExpiredOTP() (*domain.ExpiredDurationOTP, error)
 	InsertRequestOTP(data *domain.InsertRequestOTP) (string, error)
 	UpdateOTPActive(idUser int, Type string, updatedOn string) error
-	UpdateAttemptUser(IdUser int) error
+	UpdateOTPAttempt(IdUser int, Otp string, UpdatedOn string) error
 }
 
 type otpRepository struct {
@@ -26,11 +26,27 @@ func NewOtpRepository(db *sql.DB) OtpRepository {
 	}
 }
 
-func (otpRepo *otpRepository) GetUserAttempt(msisdn string) (*domain.GetUserAttempt, error) {
+func (otpRepo *otpRepository) GetUserAttempt(Msisdn string, Type string) (*domain.GetUserAttempt, error) {
 	var result domain.GetUserAttempt
-	sqlQuery := fmt.Sprintf(`SELECT id_user, attempt_request_otp FROM user_management.t_users WHERE msisdn = '%s'`, msisdn);
+	sqlQuery := fmt.Sprintf(`
+	SELECT
+		tu.id_user,
+		(SELECT COUNT(*) FROM security.t_otp to2 WHERE to2.id_user = tu.id_user AND TRIM("type") = TRIM('%s') AND status = 1) AS attempt_request_otp,
+		case WHEN
+		(SELECT COUNT(*) FROM security.t_otp to2 WHERE to2.id_user = tu.id_user AND TRIM("type") = TRIM('%s') AND status = 1) > 0
+		THEN (SELECT group_id FROM security.t_otp to2 WHERE to2.id_user = tu.id_user AND TRIM("type") = TRIM('%s') AND status = 1 ORDER BY created_on DESC LIMIT 1)
+		ELSE
+			NULL
+		END AS group_id,
+		(SELECT to2.attempt FROM "security".t_otp to2 WHERE currently_active = TRUE AND TRIM("type") = TRIM('%s') AND status = 1 LIMIT 1),
+		(SELECT to2.otp FROM "security".t_otp to2 WHERE currently_active = TRUE AND TRIM("type") = TRIM('REGISTER') AND status = 1 LIMIT 1)
+	FROM
+		user_management.t_users tu
+	WHERE
+		tu.msisdn = '%s'
+	`, Type, Type, Type, Type, Msisdn);
 
-	err := otpRepo.db.QueryRow(sqlQuery).Scan(&result.IdUser, &result.AttemptRequestOtp);
+	err := otpRepo.db.QueryRow(sqlQuery).Scan(&result.IdUser, &result.AttemptRequestOtp, &result.GroupId, &result.AttemptVerification, &result.Otp);
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil;
@@ -66,7 +82,7 @@ func (otpRepo *otpRepository) GetDurationExpiredOTP() (*domain.ExpiredDurationOT
 
 func (otpRepo *otpRepository) InsertRequestOTP(data *domain.InsertRequestOTP) (string, error) {
 	var result string
-	sqlQuery := fmt.Sprintf("INSERT INTO security.t_otp (id_user, type, otp, created_on, expired_on) VALUES (%d, '%s', '%s', '%s', '%s') RETURNING otp", data.IdUser, data.Type, data.Otp, data.CratedOn, data.ExpiredOn);
+	sqlQuery := fmt.Sprintf("INSERT INTO security.t_otp (id_user, type, otp, created_on, expired_on, group_id) VALUES (%d, '%s', '%s', '%s', '%s', '%s') RETURNING otp", data.IdUser, data.Type, data.Otp, data.CratedOn, data.ExpiredOn, data.GroupId);
 
 	err := otpRepo.db.QueryRow(sqlQuery).Scan(&result);
 	if err != nil {
@@ -77,7 +93,7 @@ func (otpRepo *otpRepository) InsertRequestOTP(data *domain.InsertRequestOTP) (s
 }
 
 func (otpRepo *otpRepository) UpdateOTPActive(idUser int, Type string, updatedOn string) error {
-	sqlQuery := fmt.Sprintf(`UPDATE security.t_otp SET status = 0, updated_on = '%s' WHERE id_user = %d AND type = '%s'`, updatedOn, idUser, Type);
+	sqlQuery := fmt.Sprintf(`UPDATE security.t_otp SET currently_active = false, updated_on = '%s' WHERE id_user = %d AND type = '%s' AND currently_active = true`, updatedOn, idUser, Type);
 
 	_, err := otpRepo.db.Exec(sqlQuery);
 	if err != nil {
@@ -90,13 +106,13 @@ func (otpRepo *otpRepository) UpdateOTPActive(idUser int, Type string, updatedOn
 	return nil;
 }
 
-func (otpRepo *otpRepository) UpdateAttemptUser(IdUser int) error {
-	sqlQuery := fmt.Sprintf("UPDATE user_management.t_users SET attempt_request_otp = CASE WHEN attempt_request_otp + 1 > 3 THEN attempt_request_otp ELSE attempt_request_otp + 1 END WHERE id_user = %d", IdUser);
+func (otpRepo *otpRepository) UpdateOTPAttempt(IdUser int, Otp string, UpdatedOn string) error {
+	sqlQuery := fmt.Sprintf("UPDATE security.t_otp SET attempt = CASE WHEN attempt + 1 > 3 THEN attempt ELSE attempt + 1 END, updated_on = '%s' WHERE id_user = %d AND otp = '%s'", UpdatedOn, IdUser, Otp);
 
 	_, err := otpRepo.db.Exec(sqlQuery);
 	if err != nil {
 		return err;
 	}
-	
+
 	return nil;
 }

@@ -21,8 +21,17 @@ type ExpiredDurationOTP struct {
 }
 
 type GetUserAttempt struct {
-	IdUser            int `json:"id_user"`
-	AttemptRequestOtp int `json:"attempt_request_otp"`
+	IdUser              int     `json:"id_user"`
+	AttemptRequestOtp   int     `json:"attempt_request_otp"`
+	GroupId             *string `json:"group_id"`
+	AttemptVerification *int    `json:"attempt"`
+	Otp                 *string `json:"otp"`
+}
+
+type GetUserOTP struct {
+	IdUser  int    `json:"id_user"`
+	Attempt int    `json:"attempt"`
+	Otp     string `json:"otp"`
 }
 
 type InsertRequestOTP struct {
@@ -31,4 +40,5 @@ type InsertRequestOTP struct {
 	Otp       string `json:"otp"`
 	CratedOn  string `json:"created_on"`
 	ExpiredOn string `json:"expired_on"`
+	GroupId   string `json:"group_id"`
 }

@@ -10,7 +10,7 @@ func ConvertStringToDurationType(durationType string) (time.Duration, error) {
 	switch strings.ToLower(durationType) {
 	case "second":
 		return time.Second, nil;
-	case "minutes":
+	case "minute":
 		return time.Minute, nil;
 	case "hour":
 		return time.Hour, nil;

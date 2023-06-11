@@ -11,6 +11,7 @@ import (
 
 type OtpService interface {
 	CreateOTP(payload *domain.RequestOtpPayload) (int, int, *domain.RequestOtpResponse, error)
+	VerificationOtp(payload *domain.VerificationOtpPayload) (int, int, error)
 }
 
 type otpService struct {
@@ -28,9 +29,13 @@ func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload) (int,
 	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
 	
 	otp := strconv.Itoa(utils.RandomNumber(6));
-	users, err := otpService.otpRepo.GetUserAttempt(payload.Msisdn);
+	users, err := otpService.otpRepo.GetUserAttempt(payload.Msisdn, payload.Type);
 	if err != nil {
 		return http.StatusInternalServerError, 5707, nil, err;
+	}
+
+	if users == nil {
+		return http.StatusBadRequest, 2203, nil, nil;
 	}
 
 	if users.IdUser == 0 {
@@ -39,6 +44,16 @@ func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload) (int,
 
 	if users.AttemptRequestOtp >= 3 {
 		return http.StatusTooManyRequests, 4736, nil, nil;
+	}
+
+	var GroupId string
+	if users.GroupId == nil {
+		GroupId, err = utils.RandomString(15);
+		if err != nil {
+			return http.StatusInternalServerError, 5525, nil, err;
+		}
+	} else {
+		GroupId = *users.GroupId;
 	}
 
 	now := time.Now();
@@ -65,17 +80,45 @@ func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload) (int,
 	data.Otp = otp;
 	data.CratedOn = createdOn;
 	data.ExpiredOn = expiredOtp;
+	data.GroupId = GroupId;
 	dataOtp, err := otpService.otpRepo.InsertRequestOTP(&data);
 	if err != nil {
 		return http.StatusInternalServerError, 1656, nil, err;
 	}
-	
-	// update attempt request otp on t_users
-	err = otpService.otpRepo.UpdateAttemptUser(users.IdUser);
-	if err != nil {
-		return http.StatusInternalServerError, 4016, nil, err;
-	}
 
 	response.Otp = dataOtp;
 	return http.StatusOK, 0, &response, nil;
+}
+
+func (otpService *otpService) VerificationOtp(payload *domain.VerificationOtpPayload) (int, int, error) {
+	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+
+	users, err := otpService.otpRepo.GetUserAttempt(payload.Msisdn, payload.Type);
+	if err != nil {
+		return http.StatusInternalServerError, 5707, err;
+	}
+
+	if users == nil {
+		return http.StatusBadRequest, 2203, nil;
+	}
+
+	if users.IdUser == 0 {
+		return http.StatusBadRequest, 2203, nil;
+	}
+
+	if users.AttemptVerification != nil && *users.AttemptVerification >= 3 {
+		return http.StatusTooManyRequests, 8761, nil;
+	}
+
+	if users.Otp != nil && *users.Otp != payload.OtpToken {
+		now := time.Now();
+		updatedOn := now.Local().Format("2006-01-02 15:04:05.999");
+		err := otpService.otpRepo.UpdateOTPAttempt(users.IdUser, *users.Otp, updatedOn);
+		if err != nil {
+			return http.StatusInternalServerError, 7365, err;
+		}
+		return http.StatusBadRequest, 1799, nil;
+	}
+
+	return http.StatusOK, 0, nil;
 }

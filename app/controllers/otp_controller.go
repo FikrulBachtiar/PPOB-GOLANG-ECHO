@@ -92,9 +92,19 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 		return response.ResponseMiddleware(ctx);
 	}
 
+	status, code, err := controller.otpService.VerificationOtp(payload);
+	if err != nil {
+		response := &configs.Response{
+			Status: status,
+			Code: code,
+			Error: err.Error(),
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
 	response := &configs.Response{
-		Status: http.StatusOK,
-		Code: 0,
+		Status: status,
+		Code: code,
 	}
 	return response.ResponseMiddleware(ctx);
 }
