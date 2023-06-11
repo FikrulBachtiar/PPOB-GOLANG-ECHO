@@ -28,7 +28,8 @@ func NewOnboardingService(onboardingRepo repository.OnboardingRepo) OnboardingSe
 func (onboardService *onboardingService) CheckAccount(c context.Context, payload *domain.CheckPayload) (int, int, *domain.CheckResponse, error) {
 	var response domain.CheckResponse
 	
-	// check akunnya sudah ada atau belum
+	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+	
 	user, err := onboardService.onboardingRepo.GetUserByNumber(payload.Msisdn);
 	if err != nil {
 		return http.StatusInternalServerError, 4007, nil, err;
@@ -44,7 +45,7 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 			return http.StatusInternalServerError, 3925, nil, err;
 		}
 		
-		serial, err := utils.SerialNumberString(utils.RandomNumber(9999999999));
+		serial, err := utils.SerialNumberString(utils.RandomNumber(10));
 		if err != nil {
 			return http.StatusInternalServerError, 7146, nil, err;
 		}

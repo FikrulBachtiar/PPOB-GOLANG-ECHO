@@ -23,7 +23,7 @@ func NewOnboardingController(db *sql.DB, onboardingService services.OnboardingSe
 }
 
 
-func (oc *onboardingController) Check(ctx echo.Context) error {
+func (onboardController *onboardingController) Check(ctx echo.Context) error {
 
 	payload := new(domain.CheckPayload);
 
@@ -45,7 +45,7 @@ func (oc *onboardingController) Check(ctx echo.Context) error {
 		return response.ResponseMiddleware(ctx);
 	}
 
-	status, code, data, err := oc.onboardingService.CheckAccount(ctx.Request().Context(), payload);
+	status, code, data, err := onboardController.onboardingService.CheckAccount(ctx.Request().Context(), payload);
 	if err != nil {
 		response := &configs.Response{
 			Status: status,

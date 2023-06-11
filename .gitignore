@@ -14,8 +14,41 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
 # Go workspace file
 go.work
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+
+# Go specific
+*.exe
+*.test
+*.prof
+*.sprof
+
+# Dependency directories (vendored packages)
+/vendor/
+/go.sum
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Build system directories
+/.idea/
+/.vscode/
+
+tmp/
+logs/
+docs/
+sql/
+dump/
+.env
