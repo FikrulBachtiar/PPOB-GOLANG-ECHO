@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -33,12 +34,10 @@ func RandomNumber(length int) int {
 	var numbers int
 	var listNumbers []int
 	var result int
-	zero := 1;
 
-	for x := 1; x < length; x++ {
+	for x := 0; x < length; x++ {
 		randomNumber := rand.Intn(9);
-		zero *= 10;
-		numbers = zero * randomNumber;
+		numbers = int(math.Pow10(x)) * randomNumber;
 		listNumbers = append(listNumbers, numbers);
 	}
 

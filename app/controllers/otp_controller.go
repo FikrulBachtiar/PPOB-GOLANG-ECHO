@@ -31,6 +31,8 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 7581,
 			Message: err.Error(),
+			DB: controller.db,
+			Type: 2,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -40,16 +42,24 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 6708,
 			Message: err.Error(),
+			DB: controller.db,
+			Type: 2,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
 
-	status, code, data, err := controller.otpService.CreateOTP(payload);
+	headerData := &domain.RequestOtpHeader{
+		DeviceID: ctx.Request().Header.Get("device_id"),
+	}
+
+	status, code, data, err := controller.otpService.CreateOTP(payload, headerData);
 	if err != nil {
 		response := &configs.Response{
 			Status: status,
 			Code: code,
 			Error: err.Error(),
+			DB: controller.db,
+			Type: 2,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -58,6 +68,8 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: status,
 			Code: code,
+			DB: controller.db,
+			Type: 2,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -66,6 +78,8 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 		Status: http.StatusOK,
 		Code: 0,
 		Data: data,
+		DB: controller.db,
+		Type: 2,
 	}
 	return response.ResponseMiddleware(ctx);
 }
@@ -79,6 +93,8 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 7581,
 			Message: err.Error(),
+			DB: controller.db,
+			Type: 3,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -88,16 +104,24 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 6708,
 			Message: err.Error(),
+			DB: controller.db,
+			Type: 3,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
 
-	status, code, err := controller.otpService.VerificationOtp(payload);
+	headerData := &domain.RequestOtpHeader{
+		DeviceID: ctx.Request().Header.Get("device_id"),
+	}
+
+	status, code, err := controller.otpService.VerificationOtp(payload, headerData);
 	if err != nil {
 		response := &configs.Response{
 			Status: status,
 			Code: code,
 			Error: err.Error(),
+			DB: controller.db,
+			Type: 3,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -105,6 +129,8 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 	response := &configs.Response{
 		Status: status,
 		Code: code,
+		DB: controller.db,
+		Type: 3,
 	}
 	return response.ResponseMiddleware(ctx);
 }
