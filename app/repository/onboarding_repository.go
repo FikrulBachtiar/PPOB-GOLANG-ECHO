@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"ppob/app/domain"
 )
 
@@ -61,7 +60,6 @@ func (onboardRepo *onboardingRepo) CreateUser(msisdn string, uuid string, fullNa
 
 	err := onboardRepo.db.QueryRow(sqlQuery).Scan(&result.IsQuestion, &result.IsEmailVerified);
 	if err != nil {
-		log.Fatal("HEHEHE");
 		return nil, err;
 	}
 

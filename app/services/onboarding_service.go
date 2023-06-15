@@ -19,7 +19,13 @@ type onboardingService struct {
 	onboardingRepo repository.OnboardingRepo
 }
 
+var user_status_code, statusAccountBlocked string
+
 func NewOnboardingService(onboardingRepo repository.OnboardingRepo) OnboardingService {
+
+	user_status_code = os.Getenv("STATUS_ACCOUNT_NORMAL");
+	statusAccountBlocked = os.Getenv("STATUS_ACCOUNT_BLOCKED");
+
 	return &onboardingService{
 		onboardingRepo: onboardingRepo,
 	}
@@ -34,12 +40,13 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 	if err != nil {
 		return http.StatusInternalServerError, 4007, nil, err;
 	}
+
+	fmt.Println(user)
 	
 	if user == nil {
 
 		uuid := utils.GenerateMD5(payload.Msisdn);
 		created_on := time.Now().Local().Format("2006-01-02 15:04:05.999");
-		user_status_code := os.Getenv("STATUS_ACCOUNT_NORMAL");
 		user_code, err := utils.RandomString(30);
 		if err != nil {
 			return http.StatusInternalServerError, 3925, nil, err;
@@ -64,7 +71,6 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 		return http.StatusOK, 0, &response, nil;
 	}
 
-	statusAccountBlocked := os.Getenv("STATUS_ACCOUNT_BLOCKED");
 	if user.UserStatusCode == statusAccountBlocked {
 		return http.StatusForbidden, 7803, nil, nil;
 	}

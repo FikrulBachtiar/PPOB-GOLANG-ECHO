@@ -32,6 +32,8 @@ func (onboardController *onboardingController) Check(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 7581,
 			Message: err.Error(),
+			DB: onboardController.db,
+			Type: 1,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -41,6 +43,8 @@ func (onboardController *onboardingController) Check(ctx echo.Context) error {
 			Status: http.StatusBadRequest,
 			Code: 6708,
 			Message: err.Error(),
+			DB: onboardController.db,
+			Type: 1,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -59,6 +63,8 @@ func (onboardController *onboardingController) Check(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: status,
 			Code: code,
+			DB: onboardController.db,
+			Type: 1,
 		}
 		return response.ResponseMiddleware(ctx);
 	}
@@ -67,6 +73,8 @@ func (onboardController *onboardingController) Check(ctx echo.Context) error {
 		Status: status,
 		Code: code,
 		Data: data,
+		DB: onboardController.db,
+		Type: 1,
 	}
 	return response.ResponseMiddleware(ctx);
 }
