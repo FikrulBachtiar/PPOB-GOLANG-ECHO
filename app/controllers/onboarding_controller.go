@@ -78,3 +78,81 @@ func (onboardController *onboardingController) Check(ctx echo.Context) error {
 	}
 	return response.ResponseMiddleware(ctx);
 }
+
+func (controller *onboardingController) Login(ctx echo.Context) error {
+
+	payload := new(domain.LoginPayload);
+
+	if err := ctx.Bind(payload); err != nil {
+		response := &configs.Response{
+			Status: http.StatusInternalServerError,
+			Code: 7581,
+			Error: err.Error(),
+			DB: controller.db,
+			Type: 4,
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
+	if err := ctx.Validate(payload); err != nil {
+		response := &configs.Response{
+			Status: http.StatusBadRequest,
+			Code: 6708,
+			Message: err.Error(),
+			DB: controller.db,
+			Type: 4,
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
+	header := &domain.LoginHeader{
+		DeviceID: ctx.Request().Header.Get("device_id"),
+		OsName: ctx.Request().Header.Get("os_name"),
+		OsVersion: ctx.Request().Header.Get("os_version"),
+		DeviceModel: ctx.Request().Header.Get("device_model"),
+		AppVersion: ctx.Request().Header.Get("app_version"),
+		Longitude: ctx.Request().Header.Get("longitude"),
+		Latitude: ctx.Request().Header.Get("latitude"),
+		NotificationID: ctx.Request().Header.Get("notification_id"),
+	}
+
+	if err := ctx.Validate(header); err != nil {
+		response := &configs.Response{
+			Status: http.StatusBadRequest,
+			Code: 6708,
+			DB: controller.db,
+			Type: 4,
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
+	status, code, _, err := controller.onboardingService.LoginAccount(ctx.Request().Context(), payload, header);
+	if err != nil {
+		response := &configs.Response{
+			Code: code,
+			Status: status,
+			Error: err.Error(),
+			DB: controller.db,
+			Type: 4,
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
+	if code != 0 {
+		response := &configs.Response{
+			Status: status,
+			Code: code,
+			DB: controller.db,
+			Type: 4,
+		}
+		return response.ResponseMiddleware(ctx);
+	}
+
+	response := &configs.Response{
+		Status: status,
+		Code: code,
+		DB: controller.db,
+		Type: 4,
+	}
+	return response.ResponseMiddleware(ctx);
+}

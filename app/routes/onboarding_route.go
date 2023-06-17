@@ -16,6 +16,7 @@ func OnboardingRoute(db *sql.DB, app *echo.Group) *echo.Group {
 	onboardController := controllers.NewOnboardingController(db, onboardService);
 
 	onboard.POST("/check", onboardController.Check);
+	onboard.POST("/login", onboardController.Login);
 
 	return onboard;
 }

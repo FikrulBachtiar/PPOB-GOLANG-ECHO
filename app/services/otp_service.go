@@ -64,7 +64,7 @@ func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload, heade
 
 	// check user
 	if users == nil {
-		return http.StatusBadRequest, 2203, nil, nil;
+		return http.StatusForbidden, 2203, nil, nil;
 	}
 
 	if users.UserStatusCode == codeAccountBlockTemporary {
