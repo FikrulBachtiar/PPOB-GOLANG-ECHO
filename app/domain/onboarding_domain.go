@@ -18,7 +18,7 @@ type LoginResponse struct {
 	FullName     string `json:"fullname"`
 }
 
-type LoginHeader struct {
+type OnboardingHeader struct {
 	DeviceID 		string `json:"device_id" validate:"required"`
 	OsName         	string `json:"os_name" validate:"required"`
 	OsVersion      	string `json:"os_version" validate:"required"`
@@ -27,6 +27,10 @@ type LoginHeader struct {
 	Longitude      	string `json:"longitude" validate:"required"`
 	Latitude       	string `json:"latitude" validate:"required"`
 	NotificationID 	string `json:"notification_id" validate:"required"`
+}
+
+type LogoutPayload struct {
+	Msisdn string `json:"msisdn" validate:"required"`
 }
 
 type CheckResponse struct {
