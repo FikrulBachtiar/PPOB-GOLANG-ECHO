@@ -36,7 +36,12 @@ func NewOtpService(otpRepo repository.OtpRepository) OtpService {
 
 func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload, header *domain.RequestOtpHeader) (int, int, *domain.RequestOtpResponse, error) {
 	var response domain.RequestOtpResponse;
-	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+	msisdn, err := utils.FormatPhoneNumber(payload.Msisdn);
+	if err != nil {
+		return http.StatusBadRequest, 5501, nil, nil;
+	}
+
+	payload.Msisdn = msisdn;
 
 	now := time.Now();
 	currentDate := now.Local().Format("2006-01-02 15:04:05.999");
@@ -141,7 +146,12 @@ func (otpService *otpService) CreateOTP(payload *domain.RequestOtpPayload, heade
 }
 
 func (otpService *otpService) VerificationOtp(payload *domain.VerificationOtpPayload, header *domain.RequestOtpHeader) (int, int, error) {
-	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+	msisdn, err := utils.FormatPhoneNumber(payload.Msisdn);
+	if err != nil {
+		return http.StatusBadRequest, 5501, nil;
+	}
+
+	payload.Msisdn = msisdn;
 
 	now := time.Now();
 	currentDate := now.Local().Format("2006-01-02 15:04:05.999");
