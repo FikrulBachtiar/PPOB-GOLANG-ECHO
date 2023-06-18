@@ -13,9 +13,11 @@ func InitRoutes(db *sql.DB) *echo.Echo {
 	app.Use(middleware.HeaderContentType);
 
 	v := validator.New()
-	app.Validator = &middleware.PayloadValidator{Validator: v, CustomValidatorErr: middleware.CustomValidatorErrorMessage};
+	app.Validator = &middleware.PayloadValidator{Validator: v};
 
 	version_route := Version1Route(app);
+	validHeader := &middleware.HeaderValidator{DB: db};
+	version_route.Use(validHeader.HeaderValidator);
 	OnboardingRoute(db, version_route);
 	OtpRoute(db, version_route);
 
