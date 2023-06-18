@@ -12,6 +12,7 @@ type OnboardingRepo interface {
 	CheckLoginDevice(IdUser int) (int, error)
 	InsertLogin(tokens *domain.InsertToken, logins *domain.InsertLogin) error
 	UpdateDataUserLogin(loginStatus int, lastLogin string, updatedOn string) error
+	UpdateUserLogout(currentDate string, DeviceID string, Msisdn string) error
 }
 
 type onboardingRepo struct {
@@ -141,5 +142,40 @@ func (repo *onboardingRepo) UpdateDataUserLogin(loginStatus int, lastLogin strin
 		return err;
 	}
 
+	return nil;
+}
+
+func (repo *onboardingRepo) UpdateUserLogout(currentDate string, DeviceID string, Msisdn string) error {
+	var IdUser int
+	trx, err := repo.db.Begin();
+	if err != nil {
+		return err;
+	}
+
+	sqlQueryUser := fmt.Sprintf("UPDATE user_management.t_users SET login_status = 0, updated_on = '%s' WHERE msisdn = '%s' RETURNING id_user", currentDate, Msisdn);
+	
+	err = repo.db.QueryRow(sqlQueryUser).Scan(&IdUser);
+	if err != nil {
+		trx.Rollback();
+		return err;
+	}
+
+	sqlQueryLogin := fmt.Sprintf("UPDATE transaction.t_login_app SET is_logout = true, logout_on = '%s' WHERE id_user = %d AND device_id = '%s' AND is_logout = false", currentDate, IdUser, DeviceID);
+	
+	_, err = repo.db.Query(sqlQueryLogin);
+	if err != nil {
+		trx.Rollback();
+		return err;
+	}
+
+	sqlQuerySession := fmt.Sprintf("UPDATE security.t_session_app SET status = 0, updated_on = '%s' WHERE id_user = %d AND device_id = '%s'", currentDate, IdUser, DeviceID);
+	
+	_, err = repo.db.Query(sqlQuerySession);
+	if err != nil {
+		trx.Rollback();
+		return err;
+	}
+
+	trx.Commit();
 	return nil;
 }

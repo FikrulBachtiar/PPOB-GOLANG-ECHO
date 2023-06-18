@@ -1,19 +1,19 @@
 package utils
 
-import (
-	"fmt"
-)
+import "errors"
 
-func FormatPhoneNumber(msisdn string) string {
-	var result string
-
+func FormatPhoneNumber(msisdn string) (string, error) {
 	if msisdn[:2] == "62" {
-		result = msisdn;
-	} else if msisdn[:1] == "0" {
-		result = fmt.Sprintf("62%s", msisdn[1:]);
-	} else {
-		result = fmt.Sprintf("62%s", msisdn);
+		return msisdn, nil;
 	}
 
-	return result
+	if msisdn[:1] == "0" {
+		return "62" + msisdn[1:], nil;
+	}
+
+	if msisdn[:1] == "+" && msisdn[:3] == "+62" {
+		return msisdn[1:], nil;
+	}
+
+	return "", errors.New("Nomor HP tidak dikenali");
 }

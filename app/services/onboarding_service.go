@@ -16,7 +16,8 @@ import (
 
 type OnboardingService interface {
 	CheckAccount(c context.Context, payload *domain.CheckPayload) (int, int, *domain.CheckResponse, error)
-	LoginAccount(c context.Context, payload *domain.LoginPayload, header *domain.LoginHeader) (int, int, *domain.LoginResponse, error)
+	LoginAccount(c context.Context, payload *domain.LoginPayload, header *domain.OnboardingHeader) (int, int, *domain.LoginResponse, error)
+	LogoutAccount(c context.Context, payload *domain.LogoutPayload, header *domain.OnboardingHeader) (int, int, error)
 }
 
 type onboardingService struct {
@@ -27,7 +28,6 @@ var user_status_code, statusAccountBlocked, passphrase, vector, appName, expired
 var tokenKey string
 
 func NewOnboardingService(onboardingRepo repository.OnboardingRepo) OnboardingService {
-
 	user_status_code = os.Getenv("STATUS_ACCOUNT_NORMAL");
 	statusAccountBlocked = os.Getenv("STATUS_ACCOUNT_BLOCKED");
 	passphrase = os.Getenv("KEY_AES");
@@ -42,12 +42,17 @@ func NewOnboardingService(onboardingRepo repository.OnboardingRepo) OnboardingSe
 	}
 }
 
-func (onboardService *onboardingService) CheckAccount(c context.Context, payload *domain.CheckPayload) (int, int, *domain.CheckResponse, error) {
+func (service *onboardingService) CheckAccount(c context.Context, payload *domain.CheckPayload) (int, int, *domain.CheckResponse, error) {
 	var response domain.CheckResponse
 	
-	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+	msisdn, err := utils.FormatPhoneNumber(payload.Msisdn);
+	if err != nil {
+		return http.StatusBadRequest, 5501, nil, nil;
+	}
+
+	payload.Msisdn = msisdn;
 	
-	user, err := onboardService.onboardingRepo.GetUserByNumber(payload.Msisdn);
+	user, err := service.onboardingRepo.GetUserByNumber(payload.Msisdn);
 	if err != nil {
 		return http.StatusInternalServerError, 4007, nil, err;
 	}
@@ -67,7 +72,7 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 		}
 		fullName := fmt.Sprintf("User%s", serial);
 		
-		result, err := onboardService.onboardingRepo.CreateUser(payload.Msisdn, uuid, fullName, user_code, created_on, user_status_code);
+		result, err := service.onboardingRepo.CreateUser(payload.Msisdn, uuid, fullName, user_code, created_on, user_status_code);
 		if err != nil {
 			return http.StatusInternalServerError, 1738, nil, err;
 		}
@@ -101,11 +106,16 @@ func (onboardService *onboardingService) CheckAccount(c context.Context, payload
 	return http.StatusOK, 0, &response, nil;
 }
 
-func (services *onboardingService) LoginAccount(c context.Context, payload *domain.LoginPayload, header *domain.LoginHeader) (int, int, *domain.LoginResponse, error) {
+func (service *onboardingService) LoginAccount(c context.Context, payload *domain.LoginPayload, header *domain.OnboardingHeader) (int, int, *domain.LoginResponse, error) {
 	var response domain.LoginResponse
-	payload.Msisdn = utils.FormatPhoneNumber(payload.Msisdn);
+	msisdn, err := utils.FormatPhoneNumber(payload.Msisdn);
+	if err != nil {
+		return http.StatusBadRequest, 5501, nil, nil;
+	}
 
-	users, err := services.onboardingRepo.GetUserByNumber(payload.Msisdn);
+	payload.Msisdn = msisdn;
+
+	users, err := service.onboardingRepo.GetUserByNumber(payload.Msisdn);
 	if err != nil {
 		return http.StatusInternalServerError, 9438, nil, err;
 	}
@@ -204,7 +214,7 @@ func (services *onboardingService) LoginAccount(c context.Context, payload *doma
 		Uuid: users.Uuid,
 	};
 
-	if err := services.onboardingRepo.InsertLogin(dataInsertToken, dataInsertLogin); err != nil {
+	if err := service.onboardingRepo.InsertLogin(dataInsertToken, dataInsertLogin); err != nil {
 		return http.StatusInternalServerError, 8031, nil, err;
 	}
 
@@ -213,4 +223,38 @@ func (services *onboardingService) LoginAccount(c context.Context, payload *doma
 	response.RefreshToken = refreshToken;
 
 	return http.StatusOK, 0, &response, nil;
+}
+
+func (service *onboardingService) LogoutAccount(c context.Context, payload *domain.LogoutPayload, header *domain.OnboardingHeader) (int, int, error) {
+	msisdn, err := utils.FormatPhoneNumber(payload.Msisdn);
+	if err != nil {
+		return http.StatusBadRequest, 5501, nil;
+	}
+
+	payload.Msisdn = msisdn;
+	now := time.Now().Local().Format("2006-01-02 15:04:05.999");
+
+	users, err := service.onboardingRepo.GetUserByNumber(payload.Msisdn);
+	if err!= nil {
+		return http.StatusInternalServerError, 5063, err;
+	}
+
+	if users == nil {
+		return http.StatusForbidden, 2203, nil;
+	}
+
+	if users.UserStatusCode == statusAccountBlocked {
+		return http.StatusForbidden, 6492, nil;
+	}
+
+	if users.LoginStatus != nil && *users.LoginStatus == 0 {
+		return http.StatusOK, 5639, nil;
+	}
+
+	err = service.onboardingRepo.UpdateUserLogout(now, header.DeviceID, payload.Msisdn);
+	if err != nil {
+		return http.StatusInternalServerError, 8680, nil;
+	}
+	
+	return http.StatusOK, 0, nil;
 }
