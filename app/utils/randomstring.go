@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -28,10 +29,23 @@ func RandomString(length int) (string, error) {
 	return randomString, nil;
 }
 
-func RandomNumber(number int) int {
+func RandomNumber(length int) int {
 	rand.Seed(time.Now().UnixNano());
-	randomNumber := rand.Intn(number);
-	return randomNumber;
+	var numbers int
+	var listNumbers []int
+	var result int
+
+	for x := 0; x < length; x++ {
+		randomNumber := rand.Intn(9);
+		numbers = int(math.Pow10(x)) * randomNumber;
+		listNumbers = append(listNumbers, numbers);
+	}
+
+	for _, num := range listNumbers {
+		result += num;
+	}
+
+	return result;
 }
 
 func SerialNumberString(number int) (string, error) {
