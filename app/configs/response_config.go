@@ -11,7 +11,6 @@ import (
 type Response struct {
 	Status  int
 	Code    int
-	Message string
 	Data    interface{}
 	Error   string
 	DB 		*sql.DB

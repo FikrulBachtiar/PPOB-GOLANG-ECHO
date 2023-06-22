@@ -13,6 +13,7 @@ type OnboardingRepo interface {
 	InsertLogin(tokens *domain.InsertToken, logins *domain.InsertLogin) error
 	UpdateDataUserLogin(loginStatus int, lastLogin string, updatedOn string) error
 	UpdateUserLogout(currentDate string, DeviceID string, Msisdn string) error
+	InsertBalance(IdUser int, IdCurrency int, Balance float64, CreateOn string, Direction string) error
 }
 
 type onboardingRepo struct {
@@ -66,9 +67,9 @@ func (repo *onboardingRepo) GetUserByNumber(msisdn string) (*domain.GetUserByNum
   
 func (repo *onboardingRepo) CreateUser(msisdn string, uuid string, fullName string, user_code string, created_on string, user_status_code string) (*domain.InsertUser, error) {
 	var result domain.InsertUser;
-	sqlQuery := fmt.Sprintf(`INSERT INTO user_management.t_users (msisdn, uuid, fullname, user_code, created_on, user_status_code) VALUES ('%s', '%s', '%s', '%s', '%s', '%s') RETURNING is_question, is_email_verified`, msisdn, uuid, fullName, user_code, created_on, user_status_code);
+	sqlQuery := fmt.Sprintf(`INSERT INTO user_management.t_users (msisdn, uuid, fullname, user_code, created_on, user_status_code) VALUES ('%s', '%s', '%s', '%s', '%s', '%s') RETURNING id_user, is_question, is_email_verified`, msisdn, uuid, fullName, user_code, created_on, user_status_code);
 
-	err := repo.db.QueryRow(sqlQuery).Scan(&result.IsQuestion, &result.IsEmailVerified);
+	err := repo.db.QueryRow(sqlQuery).Scan(&result.IdUser, &result.IsQuestion, &result.IsEmailVerified);
 	if err != nil {
 		return nil, err;
 	}
@@ -178,4 +179,16 @@ func (repo *onboardingRepo) UpdateUserLogout(currentDate string, DeviceID string
 
 	trx.Commit();
 	return nil;
+}
+
+func (repo *onboardingRepo) InsertBalance(IdUser int, IdCurrency int, Balance float64, CreateOn string, Direction string) error {
+	sqlQuery := fmt.Sprintf("INSERT INTO user_management.t_user_balance (id_user, balance_total, id_currency, created_on, direction) VALUES (%d, %f, %d, '%s', '%s')", IdUser, Balance, IdCurrency, CreateOn, Direction);
+
+	_, err := repo.db.Query(sqlQuery);
+	if err != nil {
+		return err;
+	}
+
+	return nil;
+
 }

@@ -76,6 +76,12 @@ func (service *onboardingService) CheckAccount(c context.Context, payload *domai
 		if err != nil {
 			return http.StatusInternalServerError, 1738, nil, err;
 		}
+
+		now := time.Now().Local().Format("2006-01-02 15:04:05.999");
+		err = service.onboardingRepo.InsertBalance(result.IdUser, 1, 0, now, "increase");
+		if err != nil {
+			return http.StatusInternalServerError, 5408, nil, err;
+		}
 		
 		response.EmailStatus = utils.EmailParsingString(result.IsEmailVerified);
 		response.IsQuestion = result.IsQuestion;
@@ -86,7 +92,7 @@ func (service *onboardingService) CheckAccount(c context.Context, payload *domai
 	}
 
 	if user.UserStatusCode == statusAccountBlocked {
-		return http.StatusForbidden, 7803, nil, nil;
+		return http.StatusForbidden, 6492, nil, nil;
 	}
 
 	var isLoginCode int = 1;
@@ -163,6 +169,7 @@ func (service *onboardingService) LoginAccount(c context.Context, payload *domai
 			Issuer: appName,
 			ExpiresAt: expiredDate.Unix(),
 		},
+		IdUser: users.IdUser,
 		Msisdn: payload.Msisdn,
 		DeviceID: header.DeviceID,
 		NotificationID: payload.NotificationID,

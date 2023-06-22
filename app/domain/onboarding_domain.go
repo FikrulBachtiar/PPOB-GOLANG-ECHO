@@ -53,6 +53,7 @@ type GetUserByNumber struct {
 }
 
 type InsertUser struct {
+	IdUser int `json:"id_user"`
 	IsQuestion      bool `json:"is_question"`
 	IsEmailVerified bool `json:"is_email_verified"`
 }
@@ -88,6 +89,7 @@ type InsertLogin struct {
 
 type ClaimsJWT struct {
 	jwt.StandardClaims
+	IdUser int
 	Msisdn         string
 	NotificationID string
 	DeviceID       string
