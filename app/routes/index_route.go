@@ -20,6 +20,7 @@ func InitRoutes(db *sql.DB) *echo.Echo {
 	version_route.Use(validHeader.HeaderValidator);
 	OnboardingRoute(db, version_route);
 	OtpRoute(db, version_route);
+	UserRoute(db, version_route);
 
 	return app;
 }

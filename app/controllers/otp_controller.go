@@ -30,7 +30,6 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 7581,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 2,
 		}
@@ -41,7 +40,6 @@ func (controller *otpController) RequestOtp(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 6708,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 2,
 		}
@@ -92,7 +90,6 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 7581,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 3,
 		}
@@ -103,7 +100,6 @@ func (controller *otpController) VerificationOtp(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 6708,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 3,
 		}

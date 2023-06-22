@@ -31,7 +31,6 @@ func (controller *onboardingController) Check(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 7581,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 1,
 		}
@@ -42,7 +41,6 @@ func (controller *onboardingController) Check(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 6708,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 1,
 		}
@@ -98,7 +96,6 @@ func (controller *onboardingController) Login(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 6708,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 4,
 		}
@@ -126,7 +123,7 @@ func (controller *onboardingController) Login(ctx echo.Context) error {
 		return response.ResponseMiddleware(ctx);
 	}
 
-	status, code, _, err := controller.onboardingService.LoginAccount(ctx.Request().Context(), payload, header);
+	status, code, data, err := controller.onboardingService.LoginAccount(ctx.Request().Context(), payload, header);
 	if err != nil {
 		response := &configs.Response{
 			Code: code,
@@ -152,6 +149,7 @@ func (controller *onboardingController) Login(ctx echo.Context) error {
 		Status: status,
 		Code: code,
 		DB: controller.db,
+		Data: data,
 		Type: 4,
 	}
 	return response.ResponseMiddleware(ctx);
@@ -175,7 +173,6 @@ func (controller *onboardingController) Logout(ctx echo.Context) error {
 		response := &configs.Response{
 			Status: http.StatusBadRequest,
 			Code: 6708,
-			Message: err.Error(),
 			DB: controller.db,
 			Type: 5,
 		}
